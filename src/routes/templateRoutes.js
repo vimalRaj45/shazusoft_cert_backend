@@ -3,6 +3,7 @@ const fs = require('fs');
 const { pipeline } = require('stream/promises');
 const { nanoid } = require('nanoid');
 const { query } = require('../db/neon');
+const { uploadToR2 } = require('../services/r2StorageService');
 
 const UPLOADS_DIR = path.join(__dirname, '../../uploads');
 if (!fs.existsSync(UPLOADS_DIR)) {
@@ -49,14 +50,30 @@ async function templateRoutes(fastify, options) {
       return reply.code(400).send({ message: 'No file uploaded' });
     }
 
+    // Read stream to buffer
+    const buffer = await data.toBuffer();
     const ext = path.extname(data.filename) || '.png';
     const filename = `template_${nanoid(10)}${ext}`;
     const filePath = path.join(UPLOADS_DIR, filename);
 
-    await pipeline(data.file, fs.createWriteStream(filePath));
+    // Save local copy
+    await fs.promises.writeFile(filePath, buffer);
+
+    let fileUrl = `/uploads/${filename}`;
+    try {
+      const r2Url = await uploadToR2({
+        fileBuffer: buffer,
+        fileName: filename,
+        mimeType: data.mimetype
+      });
+      if (r2Url) {
+        fileUrl = r2Url;
+      }
+    } catch (r2Err) {
+      fastify.log.warn('R2 upload failed, using local upload path: ' + r2Err.message);
+    }
 
     const templateName = data.fields?.name?.value || data.filename.replace(/\.[^/.]+$/, "") || 'Untitled Template';
-    const fileUrl = `/uploads/${filename}`;
 
     const insertRes = await query(`
       INSERT INTO templates (admin_id, name, file_url, width_px, height_px)

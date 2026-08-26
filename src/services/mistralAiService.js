@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const axios = require('axios');
 const { Mistral } = require('@mistralai/mistralai');
 
 /**
@@ -10,10 +11,21 @@ async function analyzeTemplateImage(imagePath) {
   const apiKey = process.env.MISTRAL_API_KEY || 'lj0jtoGBtC2bayA8bgrd4gAWhakpdvMd';
   const client = new Mistral({ apiKey });
 
-  // Read image and encode as base64 data URL
-  const imageBuffer = fs.readFileSync(imagePath);
-  const ext = path.extname(imagePath).toLowerCase().replace('.', '');
-  const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
+  let imageBuffer;
+  let mimeType = 'image/jpeg';
+
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    const res = await axios.get(imagePath, { responseType: 'arraybuffer' });
+    imageBuffer = Buffer.from(res.data);
+    const contentType = res.headers['content-type'];
+    if (contentType) mimeType = contentType;
+  } else {
+    // Read local image and encode as base64 data URL
+    imageBuffer = fs.readFileSync(imagePath);
+    const ext = path.extname(imagePath).toLowerCase().replace('.', '');
+    mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
+  }
+
   const base64Image = imageBuffer.toString('base64');
   const dataUrl = `data:${mimeType};base64,${base64Image}`;
 

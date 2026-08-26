@@ -107,16 +107,26 @@ async function renderCertificateCanvas({ template, fields = [], certificate, fro
   let templateLoaded = false;
   if (template.file_url) {
     let filePath = template.file_url;
-    if (filePath.startsWith('/uploads/')) {
-      filePath = path.join(__dirname, '../../', filePath);
-    }
-    if (fs.existsSync(filePath)) {
+    if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
       try {
         const bgImg = await loadImage(filePath);
         ctx.drawImage(bgImg, 0, 0, width, height);
         templateLoaded = true;
       } catch (err) {
-        console.warn('Could not load custom template image, falling back to default:', err.message);
+        console.warn('Could not load R2 template image, falling back to default:', err.message);
+      }
+    } else {
+      if (filePath.startsWith('/uploads/')) {
+        filePath = path.join(__dirname, '../../', filePath);
+      }
+      if (fs.existsSync(filePath)) {
+        try {
+          const bgImg = await loadImage(filePath);
+          ctx.drawImage(bgImg, 0, 0, width, height);
+          templateLoaded = true;
+        } catch (err) {
+          console.warn('Could not load custom template image, falling back to default:', err.message);
+        }
       }
     }
   }
