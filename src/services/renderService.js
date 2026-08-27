@@ -178,7 +178,7 @@ async function renderCertificateCanvas({ template, fields = [], certificate, fro
     const posY = (parseFloat(field.y) / 100) * height;
 
     if (field.is_qr || field.field_key === 'qr_code') {
-      // Dynamic QR Code - Professional proportions (minimum 140px for clean scan & layout balance)
+      // Dynamic QR Code - Seamless transparent integration onto certificate background
       const baseSize = parseInt(field.font_size, 10) || 32;
       const qrSize = Math.max(140, Math.round(baseSize * 4.8));
       
@@ -187,8 +187,8 @@ async function renderCertificateCanvas({ template, fields = [], certificate, fro
           width: qrSize * 2, // 2x oversampling for ultra-crisp vector-grade PDF output
           margin: 1,
           color: {
-            dark: field.font_color || '#0f172a',
-            light: '#ffffff'
+            dark: field.font_color || '#123B32',
+            light: '#00000000' // 100% transparent background - blends naturally with certificate parchment/texture
           }
         });
         const qrImg = await loadImage(qrBuffer);
@@ -199,17 +199,7 @@ async function renderCertificateCanvas({ template, fields = [], certificate, fro
         if (field.align === 'left') qrX = posX;
         if (field.align === 'right') qrX = posX - qrSize;
 
-        // Draw crisp white backing for high contrast & anti-tamper aesthetic
-        const pad = Math.round(qrSize * 0.04);
-        ctx.save();
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.08)';
-        ctx.shadowBlur = 8;
-        ctx.shadowOffsetY = 2;
-        ctx.fillRect(qrX - pad, qrY - pad, qrSize + pad * 2, qrSize + pad * 2);
-        ctx.restore();
-
-        // Draw QR Image
+        // Draw QR Image directly on the template canvas without harsh white backing
         ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
       } catch (qrErr) {
         console.error('Error generating QR code for certificate render:', qrErr);

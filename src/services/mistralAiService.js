@@ -33,24 +33,29 @@ async function analyzeTemplateImage(imagePath) {
 You are an expert typography and graphic design AI.
 Analyze this certificate template image carefully and determine:
 1. The most appropriate font family that matches this certificate's aesthetic from these options:
-   - "Cinzel, serif" (for luxury gold/presidential/diploma certificates)
-   - "Playfair Display, serif" (for classic academic/university certificates)
-   - "Outfit, sans-serif" (for modern enterprise/tech certificates)
-   - "Inter, sans-serif" (for clean minimal/digital certificates)
-   - "Great Vibes, cursive" (for script/artistic styling)
+   - "UnifrakturCook" (for Gothic, Blackletter, Old English, or ornate medieval award headers)
+   - "Cinzel" (for luxury gold/presidential/diploma certificates)
+   - "Cinzel Decorative" (for highly decorative Roman capitals)
+   - "Playfair Display" (for classic academic/university certificates)
+   - "Cormorant Garamond" (for fine traditional serif diplomas)
+   - "Great Vibes" (for script/flowing calligraphy)
+   - "Pinyon Script" (for royal English calligraphy)
+   - "Alex Brush" (for elegant signature styling)
+   - "Outfit" (for modern enterprise/tech certificates)
+   - "Inter" (for clean minimal/digital certificates)
 
-2. The primary text color and secondary highlight color found in the template (HEX format, e.g. #123B32, #C47D4C, #1e293b, #0f172a).
+2. The primary text color (e.g. #123B32 for deep emerald, #1a202c for charcoal, #2d1810 for warm sepia) and secondary highlight color (e.g. #C47D4C for warm gold/bronze) found in the template.
 
 3. The optimal percentage coordinates (x_percent from 0 to 100, y_percent from 0 to 100) and font size for dynamic fields to fit naturally on this template canvas:
    - recipient_name (usually centered, large font, prominent)
    - course_title (usually centered, medium font below recipient name)
    - issue_date (usually near bottom left or center)
    - certificate_code (usually bottom center or corner)
-   - qr_code (usually bottom corner, size ~70px)
+   - qr_code (usually bottom corner, size ~35, transparent background matching template)
 
 Respond ONLY with valid JSON in this exact structure without markdown fences:
 {
-  "font_family": "Cinzel, serif",
+  "font_family": "Cinzel",
   "primary_color": "#123B32",
   "secondary_color": "#C47D4C",
   "recommended_fields": [
