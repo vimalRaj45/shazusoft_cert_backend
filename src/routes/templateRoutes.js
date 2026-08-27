@@ -43,6 +43,48 @@ async function templateRoutes(fastify, options) {
     };
   });
 
+  // Serve template image directly with CORS and fallback to local disk
+  fastify.get('/:id/image', async (request, reply) => {
+    const { id } = request.params;
+    const templateRes = await query(`SELECT * FROM templates WHERE id = $1`, [id]);
+    if (templateRes.rows.length === 0) {
+      return reply.code(404).send({ message: 'Template not found' });
+    }
+
+    const template = templateRes.rows[0];
+    if (!template.file_url) {
+      return reply.code(404).send({ message: 'No template image' });
+    }
+
+    // Try finding local file in uploads first
+    const filename = path.basename(template.file_url.split('?')[0]);
+    const localPath = path.join(UPLOADS_DIR, filename);
+    if (fs.existsSync(localPath)) {
+      const ext = path.extname(localPath).toLowerCase();
+      const mime = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
+      reply.header('Content-Type', mime);
+      reply.header('Access-Control-Allow-Origin', '*');
+      reply.header('Cache-Control', 'public, max-age=86400');
+      return reply.send(fs.createReadStream(localPath));
+    }
+
+    // If external URL, proxy with full CORS headers
+    if (template.file_url.startsWith('http://') || template.file_url.startsWith('https://')) {
+      try {
+        const axios = require('axios');
+        const imgRes = await axios.get(template.file_url, { responseType: 'arraybuffer' });
+        reply.header('Content-Type', imgRes.headers['content-type'] || 'image/png');
+        reply.header('Access-Control-Allow-Origin', '*');
+        reply.header('Cache-Control', 'public, max-age=86400');
+        return reply.send(Buffer.from(imgRes.data));
+      } catch (e) {
+        return reply.redirect(template.file_url);
+      }
+    }
+
+    return reply.code(404).send({ message: 'Image file not found' });
+  });
+
   // Upload template image
   fastify.post('/upload', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     const data = await request.file();
