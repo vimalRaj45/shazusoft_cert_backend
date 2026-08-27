@@ -125,21 +125,21 @@ async function templateRoutes(fastify, options) {
 
     const newTemplate = insertRes.rows[0];
 
-    // Seed standard starter fields
+    // Seed standard starter fields with high contrast dark font defaults
     const defaultFields = [
-      { key: 'recipient_name', label: 'Recipient Name', x: 50, y: 35, font_size: 42, font_weight: 'bold', font_color: '#ffffff', align: 'center', is_qr: false },
-      { key: 'course_title', label: 'Course / Achievement', x: 50, y: 46, font_size: 26, font_weight: 'bold', font_color: '#fbbf24', align: 'center', is_qr: false },
-      { key: 'issue_date', label: 'Issue Date', x: 28, y: 78, font_size: 20, font_weight: 'normal', font_color: '#94a3b8', align: 'center', is_qr: false },
-      { key: 'unique_code', label: 'Certificate ID', x: 50, y: 88, font_size: 16, font_weight: 'normal', font_color: '#64748b', align: 'center', is_qr: false },
-      { key: 'qr_code', label: 'Verification QR', x: 80, y: 78, font_size: 25, font_weight: 'normal', font_color: '#000000', align: 'center', is_qr: true }
+      { key: 'recipient_name', label: 'Recipient Name', x: 50, y: 36, font_size: 42, font_family: 'Cinzel', font_weight: 'bold', font_color: '#123B32', align: 'center', is_qr: false },
+      { key: 'course_title', label: 'Course / Achievement', x: 50, y: 48, font_size: 26, font_family: 'Cinzel', font_weight: 'bold', font_color: '#C47D4C', align: 'center', is_qr: false },
+      { key: 'issue_date', label: 'Issue Date', x: 28, y: 78, font_size: 18, font_family: 'Inter', font_weight: 'normal', font_color: '#334E43', align: 'center', is_qr: false },
+      { key: 'unique_code', label: 'Certificate ID', x: 50, y: 88, font_size: 14, font_family: 'Inter', font_weight: 'normal', font_color: '#527A68', align: 'center', is_qr: false },
+      { key: 'qr_code', label: 'Verification QR', x: 80, y: 78, font_size: 34, font_family: 'Inter', font_weight: 'normal', font_color: '#0f172a', align: 'center', is_qr: true }
     ];
 
     for (const f of defaultFields) {
       await query(`
         INSERT INTO template_fields 
-        (template_id, field_key, label, x, y, font_size, font_weight, font_color, align, is_qr)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      `, [newTemplate.id, f.key, f.label, f.x, f.y, f.font_size, f.font_weight, f.font_color, f.align, f.is_qr]);
+        (template_id, field_key, label, x, y, font_size, font_family, font_weight, font_color, align, is_qr)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      `, [newTemplate.id, f.key, f.label, f.x, f.y, f.font_size, f.font_family, f.font_weight, f.font_color, f.align, f.is_qr]);
     }
 
     return { template: newTemplate };

@@ -4,6 +4,37 @@ const QRCode = require('qrcode');
 const path = require('path');
 const fs = require('fs');
 
+// Register High-End Certificate Google Fonts
+const FONTS_DIR = path.join(__dirname, '../assets/fonts');
+if (fs.existsSync(FONTS_DIR)) {
+  const FONT_MAPPINGS = {
+    'Cinzel-Regular.ttf': ['Cinzel', 'Cinzel, serif'],
+    'Cinzel-Bold.ttf': ['Cinzel', 'Cinzel, serif'],
+    'CinzelDecorative-Bold.ttf': ['Cinzel Decorative', 'Cinzel Decorative, serif'],
+    'PlayfairDisplay-Regular.ttf': ['Playfair Display', 'Playfair Display, serif'],
+    'GreatVibes-Regular.ttf': ['Great Vibes', 'Great Vibes, cursive'],
+    'PinyonScript-Regular.ttf': ['Pinyon Script', 'Pinyon Script, cursive'],
+    'AlexBrush-Regular.ttf': ['Alex Brush', 'Alex Brush, cursive'],
+    'UnifrakturCook-Bold.ttf': ['UnifrakturCook', 'UnifrakturCook, cursive'],
+    'CormorantGaramond-Regular.ttf': ['Cormorant Garamond', 'Cormorant Garamond, serif'],
+    'Outfit-Regular.ttf': ['Outfit', 'Outfit, sans-serif'],
+    'Inter-Regular.ttf': ['Inter', 'Inter, sans-serif']
+  };
+
+  for (const [file, aliases] of Object.entries(FONT_MAPPINGS)) {
+    const fontPath = path.join(FONTS_DIR, file);
+    if (fs.existsSync(fontPath)) {
+      for (const alias of aliases) {
+        try {
+          GlobalFonts.registerFromPath(fontPath, alias);
+        } catch (e) {
+          // ignore duplicate alias registration
+        }
+      }
+    }
+  }
+}
+
 /**
  * Generate default luxury certificate background if no custom image is uploaded
  */
@@ -147,24 +178,38 @@ async function renderCertificateCanvas({ template, fields = [], certificate, fro
     const posY = (parseFloat(field.y) / 100) * height;
 
     if (field.is_qr || field.field_key === 'qr_code') {
-      // Draw Dynamic QR Code
-      const qrSize = Math.round((field.font_size || 30) * 4); // scale QR appropriately
+      // Dynamic QR Code - Professional proportions (minimum 140px for clean scan & layout balance)
+      const baseSize = parseInt(field.font_size, 10) || 32;
+      const qrSize = Math.max(140, Math.round(baseSize * 4.8));
+      
       try {
         const qrBuffer = await QRCode.toBuffer(verifyUrl, {
-          width: qrSize,
+          width: qrSize * 2, // 2x oversampling for ultra-crisp vector-grade PDF output
           margin: 1,
           color: {
-            dark: field.font_color || '#000000',
+            dark: field.font_color || '#0f172a',
             light: '#ffffff'
           }
         });
         const qrImg = await loadImage(qrBuffer);
+
         // Align QR
         let qrX = posX - qrSize / 2;
         let qrY = posY - qrSize / 2;
         if (field.align === 'left') qrX = posX;
         if (field.align === 'right') qrX = posX - qrSize;
 
+        // Draw crisp white backing for high contrast & anti-tamper aesthetic
+        const pad = Math.round(qrSize * 0.04);
+        ctx.save();
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.08)';
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetY = 2;
+        ctx.fillRect(qrX - pad, qrY - pad, qrSize + pad * 2, qrSize + pad * 2);
+        ctx.restore();
+
+        // Draw QR Image
         ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
       } catch (qrErr) {
         console.error('Error generating QR code for certificate render:', qrErr);
@@ -188,12 +233,13 @@ async function renderCertificateCanvas({ template, fields = [], certificate, fro
       textValue = fieldData[field.field_key] !== undefined ? String(fieldData[field.field_key]) : (field.label || '');
     }
 
-    // Configure text styling
+    // Configure text styling with registered Google font families
     const fontSize = parseInt(field.font_size, 10) || 28;
-    const fontFamily = field.font_family || 'sans-serif';
+    let fontFamily = (field.font_family || 'Cinzel').split(',')[0].trim().replace(/['"]/g, '');
     const fontWeight = field.font_weight || 'normal';
-    ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-    ctx.fillStyle = field.font_color || '#1e293b';
+
+    ctx.font = `${fontWeight} ${fontSize}px "${fontFamily}", Cinzel, "Playfair Display", serif`;
+    ctx.fillStyle = field.font_color || '#123B32';
     ctx.textAlign = field.align || 'center';
     ctx.textBaseline = 'middle';
 
