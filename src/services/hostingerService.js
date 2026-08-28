@@ -25,19 +25,30 @@ async function sendCertificateEmail({
   recipientEmail,
   recipientName,
   courseTitle,
+  certificateTitle,
   certificateCode,
+  uniqueCode,
   downloadUrl,
   verifyUrl,
   issuerName = 'Shazu Soft Technologies'
 }) {
-  const apiKey = process.env.HOSTINGER_API_KEY || 'cd2019a0481fcaab55f1141e15cff8e49257d240d04b16f9efd7e08c2b3cbbc4';
+  const apiKey = process.env.HOSTINGER_API_KEY;
   const senderName = process.env.HOSTINGER_SENDER_NAME || 'Shazu Soft Technologies';
+
+  const title = courseTitle || certificateTitle || 'Certificate of Achievement';
+  const code = certificateCode || uniqueCode || '';
+
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const apiUrl = process.env.PUBLIC_API_URL || 'http://localhost:5000';
+
+  const finalDownloadUrl = downloadUrl || `${apiUrl}/api/public/certificates/${code}/download`;
+  const finalVerifyUrl = verifyUrl || `${frontendUrl}/verify/${code}`;
 
   const config = new Configuration({ accessToken: apiKey });
   const sendApi = new SendApi(config);
   const mailboxId = await getMailboxId(config);
 
-  const subject = `🎓 Official Certificate of Achievement: ${courseTitle}`;
+  const subject = `🎓 Official Certificate of Achievement: ${title}`;
 
   const htmlContent = `
 <!DOCTYPE html>
@@ -74,18 +85,18 @@ async function sendCertificateEmail({
     <div class="content">
       <div class="greeting">Congratulations, ${recipientName}!</div>
       <p class="message">
-        We are pleased to inform you that your official credential for <strong>"${courseTitle}"</strong> has been authenticated and permanently recorded.
+        We are pleased to inform you that your official credential for <strong>"${title}"</strong> has been authenticated and permanently recorded.
       </p>
       
       <div class="card">
         <div class="card-title">Authenticated Credential</div>
-        <div class="card-course">${courseTitle}</div>
-        <div class="card-code">Certificate ID: ${certificateCode}</div>
+        <div class="card-course">${title}</div>
+        <div class="card-code">Certificate ID: ${code}</div>
       </div>
 
       <div class="btn-group">
-        <a href="${downloadUrl}" class="btn-primary">Download Official Certificate (PDF)</a>
-        <a href="${verifyUrl}" class="btn-secondary">View & Share on LinkedIn</a>
+        <a href="${finalDownloadUrl}" class="btn-primary">Download Official Certificate (PDF)</a>
+        <a href="${finalVerifyUrl}" class="btn-secondary">View & Share on LinkedIn</a>
       </div>
 
       <p class="message" style="font-size: 12px; color: #527A68; text-align: center;">
@@ -135,7 +146,7 @@ Authenticated by ${issuerName}.
  * Send Security Login OTP Email via Hostinger Mail API SDK
  */
 async function sendOtpEmail({ recipientEmail, otp, issuerName = 'Shazu Soft Technologies' }) {
-  const apiKey = process.env.HOSTINGER_API_KEY || 'cd2019a0481fcaab55f1141e15cff8e49257d240d04b16f9efd7e08c2b3cbbc4';
+  const apiKey = process.env.HOSTINGER_API_KEY;
   const senderName = process.env.HOSTINGER_SENDER_NAME || 'Shazu Soft Technologies';
 
   const config = new Configuration({ accessToken: apiKey });

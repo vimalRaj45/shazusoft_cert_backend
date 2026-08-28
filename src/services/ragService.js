@@ -149,7 +149,7 @@ async function retrieveSystemContext(userQuery) {
  * Fast Answer Generation using Mistral AI
  */
 async function answerRagQuery({ userQuery, chatHistory = [] }) {
-  const apiKey = process.env.MISTRAL_API_KEY || 'lj0jtoGBtC2bayA8bgrd4gAWhakpdvMd';
+  const apiKey = process.env.MISTRAL_API_KEY;
   const client = new Mistral({ apiKey });
 
   const contextData = await retrieveSystemContext(userQuery);

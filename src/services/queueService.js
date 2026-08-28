@@ -46,12 +46,15 @@ class BulkQueueService {
 
         const cert = certRes.rows[0];
 
-        // Send Brevo Email if requested
+        // Send Email if requested
         if (sendEmail && row.recipient_email) {
+          const resolvedTitle = fieldData.course_title || fieldData.course || fieldData.title || courseTitle || 'Certificate of Completion';
           const emailRes = await sendCertificateEmail({
             recipientEmail: row.recipient_email,
             recipientName: row.recipient_name,
-            certificateTitle: fieldData.course_title || fieldData.course || courseTitle,
+            courseTitle: resolvedTitle,
+            certificateTitle: resolvedTitle,
+            certificateCode: cert.unique_code,
             uniqueCode: cert.unique_code
           });
 

@@ -1,8 +1,8 @@
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID || '0062c9f9a7ea658980e06d881142fd14';
+const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || 'shazusofttempate';
-const R2_PUBLIC_URL = (process.env.R2_PUBLIC_URL || 'https://pub-1e694a905cc948daa41632716cb85e30.r2.dev').replace(/\/+$/, '');
+const R2_PUBLIC_URL = (process.env.R2_PUBLIC_URL || '').replace(/\/+$/, '');
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
 const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
 

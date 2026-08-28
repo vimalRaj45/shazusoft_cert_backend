@@ -8,7 +8,7 @@ const { Mistral } = require('@mistralai/mistralai');
  * Detects matching font family, theme palette, and optimal field positions (x%, y%)
  */
 async function analyzeTemplateImage(imagePath) {
-  const apiKey = process.env.MISTRAL_API_KEY || 'lj0jtoGBtC2bayA8bgrd4gAWhakpdvMd';
+  const apiKey = process.env.MISTRAL_API_KEY;
   const client = new Mistral({ apiKey });
 
   let imageBuffer;

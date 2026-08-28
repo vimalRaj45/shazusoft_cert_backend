@@ -16,7 +16,9 @@ async function sendCertificateEmail({
   recipientEmail,
   recipientName,
   certificateTitle,
+  courseTitle,
   uniqueCode,
+  certificateCode,
   customMessage
 }) {
   const apiKey = process.env.BREVO_API_KEY;
@@ -25,16 +27,19 @@ async function sendCertificateEmail({
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
   const apiUrl = process.env.PUBLIC_API_URL || 'http://localhost:5000';
 
-  const downloadUrl = `${apiUrl}/api/public/certificates/${uniqueCode}/download`;
-  const verifyUrl = `${frontendUrl}/verify/${uniqueCode}`;
+  const title = courseTitle || certificateTitle || 'Certificate of Completion';
+  const code = certificateCode || uniqueCode || '';
+
+  const downloadUrl = `${apiUrl}/api/public/certificates/${code}/download`;
+  const verifyUrl = `${frontendUrl}/verify/${code}`;
   
   // LinkedIn Add to Profile URL
-  const courseEncoded = encodeURIComponent(certificateTitle || 'Certificate of Completion');
+  const courseEncoded = encodeURIComponent(title);
   const orgNameEncoded = encodeURIComponent(senderName);
   const now = new Date();
   const issueYear = now.getFullYear();
   const issueMonth = now.getMonth() + 1;
-  const linkedinAddUrl = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${courseEncoded}&organizationName=${orgNameEncoded}&issueYear=${issueYear}&issueMonth=${issueMonth}&certUrl=${encodeURIComponent(verifyUrl)}&certId=${uniqueCode}`;
+  const linkedinAddUrl = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${courseEncoded}&organizationName=${orgNameEncoded}&issueYear=${issueYear}&issueMonth=${issueMonth}&certUrl=${encodeURIComponent(verifyUrl)}&certId=${code}`;
 
   const htmlContent = `
     <!DOCTYPE html>

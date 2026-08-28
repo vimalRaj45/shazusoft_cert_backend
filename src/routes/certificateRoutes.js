@@ -123,14 +123,16 @@ async function certificateRoutes(fastify, options) {
 
     const certificate = certRes.rows[0];
 
-    // Send Brevo Transactional Email
+    // Send Transactional Email
     let emailStatus = 'skipped';
     if (send_email) {
-      const courseTitle = field_data.course_title || field_data.course || templateCheck.rows[0].name;
+      const resolvedTitle = field_data.course_title || field_data.course || field_data.title || templateCheck.rows[0]?.name || 'Certificate of Completion';
       const emailResult = await sendCertificateEmail({
         recipientEmail: recipient_email,
         recipientName: recipient_name,
-        certificateTitle: courseTitle,
+        courseTitle: resolvedTitle,
+        certificateTitle: resolvedTitle,
+        certificateCode: uniqueCode,
         uniqueCode: uniqueCode
       });
 
@@ -242,12 +244,14 @@ async function certificateRoutes(fastify, options) {
     }
 
     const cert = certRes.rows[0];
-    const courseTitle = cert.field_data?.course_title || cert.field_data?.course || cert.template_name;
+    const resolvedTitle = cert.field_data?.course_title || cert.field_data?.course || cert.field_data?.title || cert.template_name || 'Certificate of Completion';
 
     const emailResult = await sendCertificateEmail({
       recipientEmail: cert.recipient_email,
       recipientName: cert.recipient_name,
-      certificateTitle: courseTitle,
+      courseTitle: resolvedTitle,
+      certificateTitle: resolvedTitle,
+      certificateCode: cert.unique_code,
       uniqueCode: cert.unique_code
     });
 
