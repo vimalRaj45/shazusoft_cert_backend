@@ -60,9 +60,11 @@ async function initDB() {
         font_color TEXT DEFAULT '#1e293b',
         font_weight TEXT DEFAULT 'normal',
         align TEXT DEFAULT 'center',
+        opacity NUMERIC DEFAULT 1.0,
         is_required BOOLEAN DEFAULT true,
         is_qr BOOLEAN DEFAULT false
       );
+      ALTER TABLE template_fields ADD COLUMN IF NOT EXISTS opacity NUMERIC DEFAULT 1.0;
     `);
 
     // 4. Batches table

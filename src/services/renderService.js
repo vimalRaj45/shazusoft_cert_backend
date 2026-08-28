@@ -201,8 +201,12 @@ async function renderCertificateCanvas({ template, fields = [], certificate, fro
         if (field.align === 'left') qrX = posX;
         if (field.align === 'right') qrX = posX - qrSize;
 
+        const qrOpacity = field.opacity !== undefined && field.opacity !== null ? parseFloat(field.opacity) : 1.0;
+        ctx.save();
+        ctx.globalAlpha = isNaN(qrOpacity) ? 1.0 : Math.max(0, Math.min(1, qrOpacity));
         // Draw QR Image directly on the template canvas without harsh white backing
         ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+        ctx.restore();
       } catch (qrErr) {
         console.error('Error generating QR code for certificate render:', qrErr);
       }
@@ -229,13 +233,17 @@ async function renderCertificateCanvas({ template, fields = [], certificate, fro
     const fontSize = parseInt(field.font_size, 10) || 28;
     let fontFamily = (field.font_family || 'Cinzel').split(',')[0].trim().replace(/['"]/g, '');
     const fontWeight = field.font_weight || 'normal';
+    const textOpacity = field.opacity !== undefined && field.opacity !== null ? parseFloat(field.opacity) : 1.0;
 
+    ctx.save();
+    ctx.globalAlpha = isNaN(textOpacity) ? 1.0 : Math.max(0, Math.min(1, textOpacity));
     ctx.font = `${fontWeight} ${fontSize}px "${fontFamily}", Cinzel, "Playfair Display", serif`;
     ctx.fillStyle = field.font_color || '#123B32';
     ctx.textAlign = field.align || 'center';
     ctx.textBaseline = 'middle';
 
     ctx.fillText(textValue, posX, posY);
+    ctx.restore();
   }
 
   return canvas.toBuffer('image/png');
