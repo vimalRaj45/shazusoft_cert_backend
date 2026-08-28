@@ -59,6 +59,58 @@ async function getCachedTemplates() {
 }
 
 /**
+ * PII & Sensitive Information Anonymizer
+ * Ensures zero real personal data (Emails, Full Last Names, Phone Numbers) is sent to external LLMs.
+ */
+function sanitizePiiForLlm(text) {
+  if (!text || typeof text !== 'string') return text;
+
+  let clean = text;
+
+  // Mask Emails: e.g. vimalraj5207@gmail.com -> v***7@gmail.com
+  clean = clean.replace(/([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, (match, user, domain) => {
+    if (user.length <= 2) return `${user[0] || 'u'}***@${domain}`;
+    return `${user[0]}***${user[user.length - 1]}@${domain}`;
+  });
+
+  // Mask Phone numbers: e.g. +1-234-567-8900 -> [REDACTED_PHONE]
+  clean = clean.replace(/(\+\d{1,3}[\s-]?)?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}/g, '[REDACTED_PHONE]');
+
+  return clean;
+}
+
+/**
+ * Anonymizes certificate database record before LLM context injection
+ */
+function anonymizeRecordForLlm(c, index = 0) {
+  const dummyNames = ['John Doe', 'Jane Smith', 'Alex Morgan', 'Jordan Taylor', 'Sam River'];
+  
+  let anonymizedName = dummyNames[index % dummyNames.length];
+  if (c.recipient_name) {
+    const parts = c.recipient_name.trim().split(/\s+/);
+    if (parts.length > 1) {
+      // Keep title / first name, anonymize last name: "Dr. Vimal Raj S" -> "Dr. Vimal R."
+      anonymizedName = `${parts[0]} ${parts.slice(1).map(p => p[0].toUpperCase() + '.').join(' ')}`;
+    } else {
+      anonymizedName = parts[0];
+    }
+  }
+
+  const anonymizedEmail = sanitizePiiForLlm(c.recipient_email || 'recipient@example.com');
+  const code = c.unique_code || 'CERT-SAMPLE';
+
+  return {
+    recipient_name: anonymizedName,
+    recipient_email: anonymizedEmail,
+    unique_code: code,
+    course_title: c.field_data?.course_title || c.template_name || 'Certificate',
+    status: c.status || 'issued',
+    verified_count: c.verified_count || 0,
+    issued_at: c.issued_at
+  };
+}
+
+/**
  * Optimized Knowledge Retrieval Engine with Parallel Execution & Query Indexing
  */
 async function retrieveSystemContext(userQuery) {
@@ -127,15 +179,17 @@ async function retrieveSystemContext(userQuery) {
     }
 
     if (certMatchesResult && certMatchesResult.length > 0) {
-      retrievedContext += `\n[CERTIFICATE RECORDS]:\n` + certMatchesResult.map(c => 
-        `- Recipient: "${c.recipient_name}" (${c.recipient_email}) | ID: ${c.unique_code} | Course: ${c.field_data?.course_title || c.template_name || 'Certificate'} | Status: ${c.status} | Verified: ${c.verified_count}x | Date: ${new Date(c.issued_at).toLocaleDateString()}`
-      ).join('\n') + '\n';
+      retrievedContext += `\n[CERTIFICATE RECORDS (ANONYMIZED FOR PRIVACY)]:\n` + certMatchesResult.map((raw, idx) => {
+        const c = anonymizeRecordForLlm(raw, idx);
+        return `- Recipient: "${c.recipient_name}" (${c.recipient_email}) | ID: ${c.unique_code} | Course: ${c.course_title} | Status: ${c.status} | Verified: ${c.verified_count}x | Date: ${new Date(c.issued_at).toLocaleDateString()}`;
+      }).join('\n') + '\n';
     }
 
     if (auditResult.rows && auditResult.rows.length > 0) {
-      retrievedContext += `\n[RECENT ONLINE VERIFICATIONS]:\n` + auditResult.rows.map(a =>
-        `- "${a.unique_code}" for ${a.recipient_name} at ${new Date(a.verified_at).toLocaleTimeString()}`
-      ).join('\n') + '\n';
+      retrievedContext += `\n[RECENT ONLINE VERIFICATIONS]:\n` + auditResult.rows.map((a) => {
+        const maskedName = a.recipient_name ? `${a.recipient_name.split(' ')[0]} ${a.recipient_name.split(' ').slice(1).map(p => p[0].toUpperCase() + '.').join(' ')}` : 'Sample Recipient';
+        return `- "${a.unique_code}" for ${maskedName} at ${new Date(a.verified_at).toLocaleTimeString()}`;
+      }).join('\n') + '\n';
     }
 
   } catch (err) {
@@ -156,7 +210,7 @@ async function answerRagQuery({ userQuery, chatHistory = [] }) {
 
   const systemPrompt = `
 You are the Certificate Assistant for **Shazu Soft Technologies**.
-Answer questions accurately and concisely using ONLY the real database records provided below:
+Answer questions accurately and concisely using ONLY the system records provided below:
 
 === SYSTEM RECORDS ===
 ${contextData}
@@ -169,10 +223,16 @@ Guidelines:
 - Keep answers concise and direct.
   `;
 
+  const sanitizedUserQuery = sanitizePiiForLlm(userQuery);
+  const sanitizedChatHistory = chatHistory.slice(-4).map(m => ({
+    role: m.role === 'user' ? 'user' : 'assistant',
+    content: sanitizePiiForLlm(m.content)
+  }));
+
   const messages = [
     { role: 'system', content: systemPrompt },
-    ...chatHistory.slice(-4).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content })),
-    { role: 'user', content: userQuery }
+    ...sanitizedChatHistory,
+    { role: 'user', content: sanitizedUserQuery }
   ];
 
   try {
