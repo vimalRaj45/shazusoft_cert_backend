@@ -189,6 +189,7 @@ async function templateRoutes(fastify, options) {
     // Delete existing fields and insert updated set
     await query(`DELETE FROM template_fields WHERE template_id = $1`, [id]);
 
+    for (const field of fields) {
       const fieldOpacity = field.opacity !== undefined && field.opacity !== null ? Math.max(0.05, Math.min(1.0, parseFloat(field.opacity))) : 1.0;
       await query(`
         INSERT INTO template_fields 
