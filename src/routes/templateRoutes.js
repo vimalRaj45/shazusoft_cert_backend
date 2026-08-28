@@ -115,13 +115,26 @@ async function templateRoutes(fastify, options) {
       fastify.log.warn('R2 upload failed, using local upload path: ' + r2Err.message);
     }
 
+    let imgWidth = 2970;
+    let imgHeight = 2100;
+    try {
+      const { loadImage } = require('@napi-rs/canvas');
+      const loadedImg = await loadImage(buffer);
+      if (loadedImg && loadedImg.width && loadedImg.height) {
+        imgWidth = loadedImg.width;
+        imgHeight = loadedImg.height;
+      }
+    } catch (imgErr) {
+      // fallback to 29.7cm x 21cm aspect ratio
+    }
+
     const templateName = data.fields?.name?.value || data.filename.replace(/\.[^/.]+$/, "") || 'Untitled Template';
 
     const insertRes = await query(`
       INSERT INTO templates (admin_id, name, file_url, width_px, height_px)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *
-    `, [request.user.id, templateName, fileUrl, 1920, 1080]);
+    `, [request.user.id, templateName, fileUrl, imgWidth, imgHeight]);
 
     const newTemplate = insertRes.rows[0];
 
@@ -153,7 +166,7 @@ async function templateRoutes(fastify, options) {
       INSERT INTO templates (admin_id, name, file_url, width_px, height_px)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *
-    `, [request.user.id, templateName, '', 1920, 1080]);
+    `, [request.user.id, templateName, '', 2970, 2100]);
 
     const newTemplate = insertRes.rows[0];
 

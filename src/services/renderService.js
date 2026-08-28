@@ -40,7 +40,7 @@ if (fs.existsSync(FONTS_DIR)) {
 /**
  * Generate default luxury certificate background if no custom image is uploaded
  */
-async function generateDefaultTemplateCanvas(width = 1920, height = 1080) {
+async function generateDefaultTemplateCanvas(width = 2970, height = 2100) {
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
 
@@ -258,22 +258,40 @@ async function renderCertificatePDF(renderParams) {
   const pdfDoc = await PDFDocument.create();
   const pngImage = await pdfDoc.embedPng(pngBuffer);
 
-  const width = renderParams.template.width_px || 1920;
-  const height = renderParams.template.height_px || 1080;
+  const imgWidth = pngImage.width || renderParams.template?.width_px || 2970;
+  const imgHeight = pngImage.height || renderParams.template?.height_px || 2100;
 
-  // Add a page matching the certificate aspect ratio in points (72 DPI)
-  // Scaling standard: 1920x1080 -> 842 x 473 (Landscape A4-ish)
-  const scale = 0.5;
-  const pageWidth = width * scale;
-  const pageHeight = height * scale;
+  // Standard A4 Landscape PDF Page Size (29.7 cm x 21.0 cm at 72 DPI)
+  // 29.7 cm = 841.89 points, 21.0 cm = 595.28 points
+  const pageWidth = 841.89;
+  const pageHeight = 595.28;
+
+  // Preserve exact aspect ratio without compressing, stretching, or distortion
+  const imgAspect = imgWidth / imgHeight;
+  const pdfAspect = pageWidth / pageHeight;
+
+  let drawW = pageWidth;
+  let drawH = pageHeight;
+  let drawX = 0;
+  let drawY = 0;
+
+  if (Math.abs(imgAspect - pdfAspect) > 0.01) {
+    if (imgAspect > pdfAspect) {
+      drawH = pageWidth / imgAspect;
+      drawY = (pageHeight - drawH) / 2;
+    } else {
+      drawW = pageHeight * imgAspect;
+      drawX = (pageWidth - drawW) / 2;
+    }
+  }
 
   const page = pdfDoc.addPage([pageWidth, pageHeight]);
 
   page.drawImage(pngImage, {
-    x: 0,
-    y: 0,
-    width: pageWidth,
-    height: pageHeight
+    x: drawX,
+    y: drawY,
+    width: drawW,
+    height: drawH
   });
 
   pdfDoc.setTitle(`Certificate - ${renderParams.certificate.recipient_name}`);
