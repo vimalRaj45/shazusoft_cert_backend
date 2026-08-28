@@ -243,6 +243,27 @@ async function renderCertificateCanvas({ template, fields = [], certificate, fro
     ctx.textBaseline = 'middle';
 
     ctx.fillText(textValue, posX, posY);
+
+    if (field.is_underline || field.text_decoration === 'underline') {
+      const metrics = ctx.measureText(textValue);
+      const textWidth = metrics.width;
+      const underlineY = posY + (fontSize * 0.28);
+
+      let startX = posX;
+      if (field.align === 'center') {
+        startX = posX - (textWidth / 2);
+      } else if (field.align === 'right') {
+        startX = posX - textWidth;
+      }
+
+      ctx.lineWidth = Math.max(1.5, Math.round(fontSize / 16));
+      ctx.strokeStyle = field.font_color || '#123B32';
+      ctx.beginPath();
+      ctx.moveTo(startX, underlineY);
+      ctx.lineTo(startX + textWidth, underlineY);
+      ctx.stroke();
+    }
+
     ctx.restore();
   }
 

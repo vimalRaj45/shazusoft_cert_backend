@@ -62,9 +62,11 @@ async function initDB() {
         align TEXT DEFAULT 'center',
         opacity NUMERIC DEFAULT 1.0,
         is_required BOOLEAN DEFAULT true,
-        is_qr BOOLEAN DEFAULT false
+        is_qr BOOLEAN DEFAULT false,
+        is_underline BOOLEAN DEFAULT false
       );
       ALTER TABLE template_fields ADD COLUMN IF NOT EXISTS opacity NUMERIC DEFAULT 1.0;
+      ALTER TABLE template_fields ADD COLUMN IF NOT EXISTS is_underline BOOLEAN DEFAULT false;
     `);
 
     // 4. Batches table

@@ -227,8 +227,8 @@ async function templateRoutes(fastify, options) {
       const fieldOpacity = field.opacity !== undefined && field.opacity !== null ? Math.max(0.05, Math.min(1.0, parseFloat(field.opacity))) : 1.0;
       await query(`
         INSERT INTO template_fields 
-        (template_id, field_key, label, x, y, font_family, font_size, font_color, font_weight, align, opacity, is_required, is_qr)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        (template_id, field_key, label, x, y, font_family, font_size, font_color, font_weight, align, opacity, is_required, is_qr, is_underline)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       `, [
         id,
         field.field_key || field.key,
@@ -242,7 +242,8 @@ async function templateRoutes(fastify, options) {
         field.align || 'center',
         fieldOpacity,
         field.is_required !== undefined ? field.is_required : true,
-        field.is_qr || field.field_key === 'qr_code'
+        field.is_qr || field.field_key === 'qr_code',
+        field.is_underline || false
       ]);
     }
 
