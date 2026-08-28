@@ -115,6 +115,7 @@ async function templateRoutes(fastify, options) {
       fastify.log.warn('R2 upload failed, using local upload path: ' + r2Err.message);
     }
 
+    // Extract exact native pixel width and height from uploaded image file
     let imgWidth = 2970;
     let imgHeight = 2100;
     try {
@@ -125,7 +126,27 @@ async function templateRoutes(fastify, options) {
         imgHeight = loadedImg.height;
       }
     } catch (imgErr) {
-      // fallback to 29.7cm x 21cm aspect ratio
+      // Fallback PNG/JPEG binary header parser for 100% precision
+      try {
+        if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
+          imgWidth = buffer.readUInt32BE(16);
+          imgHeight = buffer.readUInt32BE(20);
+        } else if (buffer[0] === 0xff && buffer[1] === 0xd8) {
+          let offset = 2;
+          while (offset < buffer.length) {
+            const marker = buffer.readUInt16BE(offset);
+            offset += 2;
+            if (marker === 0xffc0 || marker === 0xffc1 || marker === 0xffc2) {
+              imgHeight = buffer.readUInt16BE(offset + 3);
+              imgWidth = buffer.readUInt16BE(offset + 5);
+              break;
+            } else {
+              const length = buffer.readUInt16BE(offset);
+              offset += length;
+            }
+          }
+        }
+      } catch (headerErr) {}
     }
 
     const templateName = data.fields?.name?.value || data.filename.replace(/\.[^/.]+$/, "") || 'Untitled Template';
