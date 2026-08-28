@@ -18,6 +18,8 @@ if (fs.existsSync(FONTS_DIR)) {
     'UnifrakturCook-Bold.ttf': ['UnifrakturCook', 'UnifrakturCook, cursive'],
     'CormorantGaramond-Regular.ttf': ['Cormorant Garamond', 'Cormorant Garamond, serif'],
     'Outfit-Regular.ttf': ['Outfit', 'Outfit, sans-serif'],
+    'BeVietnamPro-Regular.ttf': ['Be Vietnam Pro', 'Be Vietnam', 'Be Vietnam Pro, sans-serif'],
+    'BeVietnamPro-Bold.ttf': ['Be Vietnam Pro', 'Be Vietnam', 'Be Vietnam Pro, sans-serif'],
     'Inter-Regular.ttf': ['Inter', 'Inter, sans-serif']
   };
 
