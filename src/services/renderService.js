@@ -171,7 +171,14 @@ async function renderCertificateCanvas({ template, fields = [], certificate, fro
 
   const fieldData = certificate.field_data || {};
   const uniqueCode = certificate.unique_code;
-  const verifyUrl = `${frontendUrl}/verify/${uniqueCode}`;
+  let resolvedFrontendUrl = frontendUrl || process.env.FRONTEND_URL || 'https://certificates.shazusofttechnologies.org';
+  if (resolvedFrontendUrl.includes('pages.dev') || resolvedFrontendUrl.includes('localhost')) {
+    resolvedFrontendUrl = process.env.FRONTEND_URL || 'https://certificates.shazusofttechnologies.org';
+  }
+  if (resolvedFrontendUrl.includes('pages.dev')) {
+    resolvedFrontendUrl = 'https://certificates.shazusofttechnologies.org';
+  }
+  const verifyUrl = `${resolvedFrontendUrl}/verify/${uniqueCode}`;
 
   // Draw Field Mappings onto Canvas
   for (const field of fields) {

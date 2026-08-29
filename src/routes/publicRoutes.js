@@ -93,7 +93,7 @@ async function publicRoutes(fastify, options) {
       template,
       fields: fieldsRes.rows,
       certificate: cert,
-      frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173'
+      frontendUrl: process.env.FRONTEND_URL || 'https://certificates.shazusofttechnologies.org'
     });
 
     const safeName = cert.recipient_name.replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -133,7 +133,7 @@ async function publicRoutes(fastify, options) {
       template,
       fields: fieldsRes.rows,
       certificate: cert,
-      frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173'
+      frontendUrl: process.env.FRONTEND_URL || 'https://certificates.shazusofttechnologies.org'
     });
 
     reply
@@ -144,7 +144,10 @@ async function publicRoutes(fastify, options) {
   // QR Code Image
   fastify.get('/certificates/:code/qr', async (request, reply) => {
     const { code } = request.params;
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    let frontendUrl = process.env.FRONTEND_URL || 'https://certificates.shazusofttechnologies.org';
+    if (frontendUrl.includes('pages.dev')) {
+      frontendUrl = 'https://certificates.shazusofttechnologies.org';
+    }
     const verifyUrl = `${frontendUrl}/verify/${code}`;
 
     const qrBuffer = await QRCode.toBuffer(verifyUrl, {

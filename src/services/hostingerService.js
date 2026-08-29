@@ -38,7 +38,10 @@ async function sendCertificateEmail({
   const title = courseTitle || certificateTitle || 'Certificate of Achievement';
   const code = certificateCode || uniqueCode || '';
 
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  let frontendUrl = process.env.FRONTEND_URL || 'https://certificates.shazusofttechnologies.org';
+  if (frontendUrl.includes('pages.dev')) {
+    frontendUrl = 'https://certificates.shazusofttechnologies.org';
+  }
   const apiUrl = process.env.PUBLIC_API_URL || 'http://localhost:5000';
 
   const finalDownloadUrl = downloadUrl || `${apiUrl}/api/public/certificates/${code}/download`;

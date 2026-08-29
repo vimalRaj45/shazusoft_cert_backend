@@ -357,7 +357,10 @@ async function templateRoutes(fastify, options) {
       }
     };
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    let frontendUrl = process.env.FRONTEND_URL || 'https://certificates.shazusofttechnologies.org';
+    if (frontendUrl.includes('pages.dev')) {
+      frontendUrl = 'https://certificates.shazusofttechnologies.org';
+    }
     const verifyUrl = `${frontendUrl}/verify/SAMPLE-VERIFY-123456`;
     const qrDataUrl = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 200 });
 

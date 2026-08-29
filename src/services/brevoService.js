@@ -24,7 +24,10 @@ async function sendCertificateEmail({
   const apiKey = process.env.BREVO_API_KEY;
   const senderEmail = process.env.BREVO_SENDER_EMAIL || 'vsgrpsemail@gmail.com';
   const senderName = process.env.BREVO_SENDER_NAME || 'Shazu Soft Technologies';
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  let frontendUrl = process.env.FRONTEND_URL || 'https://certificates.shazusofttechnologies.org';
+  if (frontendUrl.includes('pages.dev')) {
+    frontendUrl = 'https://certificates.shazusofttechnologies.org';
+  }
   const apiUrl = process.env.PUBLIC_API_URL || 'http://localhost:5000';
 
   const title = courseTitle || certificateTitle || 'Certificate of Completion';
