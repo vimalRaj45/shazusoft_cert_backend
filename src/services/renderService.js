@@ -247,7 +247,7 @@ async function renderCertificateCanvas({ template, fields = [], certificate, fro
     if (field.is_underline || field.text_decoration === 'underline') {
       const metrics = ctx.measureText(textValue);
       const textWidth = metrics.width;
-      const underlineY = posY + (fontSize * 0.28);
+      const underlineY = posY + (fontSize * 0.58);
 
       let startX = posX;
       if (field.align === 'center') {
