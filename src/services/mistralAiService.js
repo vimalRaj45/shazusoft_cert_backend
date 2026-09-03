@@ -96,8 +96,8 @@ Respond ONLY with valid JSON in this exact structure without markdown fences:
       "is_qr": false
     },
     {
-      "field_name": "certificate_code",
-      "field_label": "Certificate ID / Code",
+      "field_name": "unique_code",
+      "field_label": "Certificate ID",
       "field_type": "text",
       "x_percent": 50.0,
       "y_percent": 84.0,
@@ -152,7 +152,7 @@ Respond ONLY with valid JSON in this exact structure without markdown fences:
         { field_name: 'recipient_name', field_label: 'Recipient Full Name', field_type: 'text', x_percent: 50.0, y_percent: 42.0, font_size: 34, font_family: 'Cinzel, serif', color: '#123B32', align: 'center', is_qr: false },
         { field_name: 'course_title', field_label: 'Course / Achievement Title', field_type: 'text', x_percent: 50.0, y_percent: 54.0, font_size: 22, font_family: 'Cinzel, serif', color: '#334E43', align: 'center', is_qr: false },
         { field_name: 'issue_date', field_label: 'Issue Date', field_type: 'date', x_percent: 30.0, y_percent: 76.0, font_size: 14, font_family: 'Inter, sans-serif', color: '#334E43', align: 'center', is_qr: false },
-        { field_name: 'certificate_code', field_label: 'Certificate ID / Code', field_type: 'text', x_percent: 50.0, y_percent: 84.0, font_size: 12, font_family: 'Inter, sans-serif', color: '#527A68', align: 'center', is_qr: false },
+        { field_name: 'unique_code', field_label: 'Certificate ID', field_type: 'text', x_percent: 50.0, y_percent: 84.0, font_size: 12, font_family: 'Inter, sans-serif', color: '#527A68', align: 'center', is_qr: false },
         { field_name: 'qr_code', field_label: 'Anti-Tamper QR Code', field_type: 'qr', x_percent: 75.0, y_percent: 76.0, font_size: 70, font_family: 'Inter, sans-serif', color: '#000000', align: 'center', is_qr: true }
       ]
     };

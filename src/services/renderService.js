@@ -221,12 +221,23 @@ async function renderCertificateCanvas({ template, fields = [], certificate, fro
     }
 
     // Resolve Field Text Value
+    const key = (field.field_key || '').toLowerCase();
+    const label = (field.label || '').toLowerCase();
     let textValue = '';
-    if (field.field_key === 'recipient_name') {
+    if (key === 'recipient_name' || key === 'name') {
       textValue = certificate.recipient_name;
-    } else if (field.field_key === 'unique_code' || field.field_key === 'certificate_id') {
+    } else if (
+      key === 'unique_code' ||
+      key === 'certificate_id' ||
+      key === 'certificate_code' ||
+      key === 'cert_id' ||
+      key === 'cert_code' ||
+      key === 'code' ||
+      label.includes('certificate id') ||
+      label.includes('cert id')
+    ) {
       textValue = uniqueCode;
-    } else if (field.field_key === 'issue_date' || field.field_key === 'date') {
+    } else if (key === 'issue_date' || key === 'date') {
       textValue = fieldData[field.field_key] || new Date(certificate.issued_at || Date.now()).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
