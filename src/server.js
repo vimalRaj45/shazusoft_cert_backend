@@ -78,6 +78,9 @@ fastify.register(require('./routes/batchRoutes'), { prefix: '/api/batches' });
 fastify.register(require('./routes/analyticsRoutes'), { prefix: '/api/analytics' });
 fastify.register(require('./routes/aiRoutes'), { prefix: '/api/ai' });
 fastify.register(require('./routes/publicRoutes'), { prefix: '/api/public' });
+fastify.register(require('./routes/externalRoutes'), { prefix: '/api/v1/external' });
+fastify.register(require('./routes/apiKeyRoutes'), { prefix: '/api/api-keys' });
+fastify.register(require('./routes/associationRoutes'), { prefix: '/api/association-mappings' });
 
 // Global Error Handler
 fastify.setErrorHandler((error, request, reply) => {

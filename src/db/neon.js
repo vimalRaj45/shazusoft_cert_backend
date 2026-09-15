@@ -123,7 +123,34 @@ async function initDB() {
       );
     `);
 
-    // Performance Indexes for Instant RAG & Search Lookups
+    // 8. API Keys table for external system integration
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS api_keys (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name TEXT NOT NULL,
+        key_prefix TEXT NOT NULL,
+        key_hash TEXT NOT NULL,
+        permissions TEXT[] DEFAULT ARRAY['certificates:issue', 'certificates:read', 'templates:read'],
+        is_active BOOLEAN DEFAULT true,
+        last_used_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT now()
+      );
+    `);
+
+    // 9. Association Mappings table for dynamic template resolution
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS association_mappings (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        association_name TEXT UNIQUE NOT NULL,
+        template_id UUID REFERENCES templates(id) ON DELETE CASCADE,
+        default_course_title TEXT,
+        default_issuer_name TEXT,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMPTZ DEFAULT now()
+      );
+    `);
+
+    // Performance Indexes for Instant RAG, Search & External API Lookups
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_certs_recipient_email ON certificates(recipient_email);
       CREATE INDEX IF NOT EXISTS idx_certs_recipient_name ON certificates(recipient_name);
@@ -132,6 +159,8 @@ async function initDB() {
       CREATE INDEX IF NOT EXISTS idx_certs_status ON certificates(status);
       CREATE INDEX IF NOT EXISTS idx_verification_logs_cert_id ON verification_logs(certificate_id);
       CREATE INDEX IF NOT EXISTS idx_verification_logs_verified_at ON verification_logs(verified_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_api_keys_prefix ON api_keys(key_prefix);
+      CREATE INDEX IF NOT EXISTS idx_assoc_mappings_name ON association_mappings(LOWER(association_name));
     `);
 
     // Check and seed default admin
