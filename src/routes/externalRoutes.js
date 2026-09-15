@@ -77,6 +77,68 @@ async function externalRoutes(fastify, options) {
   });
 
   /**
+   * 1b. GET /templates/:identifier
+   * Get single template details and its required/optional field schema by Template Name, ID, or Association Name
+   */
+  fastify.get('/templates/:identifier', async (request, reply) => {
+    const { identifier } = request.params;
+
+    const resolution = await resolveTemplate({
+      template_id: identifier.includes('-') && identifier.length === 36 ? identifier : undefined,
+      template_name: identifier,
+      association_name: identifier
+    });
+
+    if (!resolution) {
+      const choices = await getAvailableChoices();
+      return reply.code(404).send({
+        success: false,
+        error: 'TemplateNotFound',
+        message: `Template or association "${identifier}" not found.`,
+        available_templates: choices.templates,
+        available_associations: choices.associations
+      });
+    }
+
+    const { template, fields, mapping, matchedBy } = resolution;
+    const publicApiUrl = process.env.PUBLIC_API_URL || 'http://localhost:5000';
+    const previewUrl = template.file_url?.startsWith('http')
+      ? template.file_url
+      : `${publicApiUrl}/api/templates/${template.id}/image`;
+
+    const formattedFields = (fields || [])
+      .filter((f) => !f.is_qr && f.field_key !== 'qr_code' && f.field_key !== 'unique_code' && f.field_key !== 'certificate_id')
+      .map((f) => ({
+        field_key: f.field_key,
+        label: f.label,
+        is_required: f.is_required !== false,
+        font_family: f.font_family,
+        font_size: f.font_size,
+        font_color: f.font_color
+      }));
+
+    // Standard required fields included in schema for clarity
+    const requiredFields = [
+      { field_key: 'recipient_name', label: 'Recipient Full Name', is_required: true },
+      { field_key: 'recipient_email', label: 'Recipient Email Address', is_required: true },
+      ...formattedFields
+    ];
+
+    return {
+      success: true,
+      template: {
+        id: template.id,
+        name: template.name,
+        matched_by: matchedBy,
+        image_url: previewUrl,
+        default_course_title: mapping?.default_course_title || template.name,
+        default_issuer_name: mapping?.default_issuer_name || 'Shazu Soft Technologies',
+        required_fields: requiredFields
+      }
+    };
+  });
+
+  /**
    * 2. GET /associations
    * List all active association-to-template mappings
    */
@@ -168,7 +230,35 @@ async function externalRoutes(fastify, options) {
       });
     }
 
-    const { template, mapping, matchedBy } = resolution;
+    const { template, fields, mapping, matchedBy } = resolution;
+
+    // Validate required fields defined on the template
+    const missingRequired = [];
+    for (const field of fields || []) {
+      if (!field.is_required || field.is_qr || field.field_key === 'qr_code' || field.field_key === 'unique_code' || field.field_key === 'certificate_id') {
+        continue;
+      }
+      const key = field.field_key.toLowerCase();
+      if (key === 'recipient_name' || key === 'name') {
+        if (!recipient_name) missingRequired.push(field.label || field.field_key);
+      } else if (key === 'course_title' || key === 'course' || key === 'title') {
+        const titleVal = course_title || field_data.course_title || field_data.course || mapping?.default_course_title || template.name;
+        if (!titleVal) missingRequired.push(field.label || field.field_key);
+      } else {
+        if (field_data[field.field_key] === undefined || field_data[field.field_key] === null || String(field_data[field.field_key]).trim() === '') {
+          missingRequired.push(field.label || field.field_key);
+        }
+      }
+    }
+
+    if (missingRequired.length > 0) {
+      return reply.code(400).send({
+        success: false,
+        error: 'ValidationError',
+        message: `Missing required certificate field(s): ${missingRequired.join(', ')}`,
+        missing_fields: missingRequired
+      });
+    }
 
     // Resolve course title and issuer
     const resolvedTitle =
