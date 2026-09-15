@@ -254,15 +254,32 @@ async function templateRoutes(fastify, options) {
   // Delete Template
   fastify.delete('/:id', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     const { id } = request.params;
-    
+    const { force } = request.query || {};
+
     // Check if certificates exist
     const certCheck = await query(`SELECT COUNT(*) FROM certificates WHERE template_id = $1`, [id]);
-    if (parseInt(certCheck.rows[0].count, 10) > 0) {
-      return reply.code(400).send({ message: 'Cannot delete template with existing issued certificates' });
+    const certCount = parseInt(certCheck.rows[0].count, 10);
+
+    if (certCount > 0 && String(force).toLowerCase() !== 'true') {
+      return reply.code(400).send({
+        has_certificates: true,
+        certificate_count: certCount,
+        message: `Cannot delete template: ${certCount} certificate(s) were issued with this template. Confirm force delete to permanently remove the template and all ${certCount} associated certificate(s).`
+      });
     }
 
+    if (certCount > 0 && String(force).toLowerCase() === 'true') {
+      await query(`DELETE FROM certificates WHERE template_id = $1`, [id]);
+    }
+
+    // Cascade delete association mappings
+    await query(`DELETE FROM association_mappings WHERE template_id = $1`, [id]);
+    // Cascade delete template fields
+    await query(`DELETE FROM template_fields WHERE template_id = $1`, [id]);
+    // Delete template record
     await query(`DELETE FROM templates WHERE id = $1`, [id]);
-    return { message: 'Template deleted successfully' };
+
+    return { message: 'Template and associated fields deleted successfully' };
   });
 
   // Mistral AI Vision Template Font & Coordinates Auto-Analysis

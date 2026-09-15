@@ -266,6 +266,36 @@ async function certificateRoutes(fastify, options) {
       error: emailResult.error
     };
   });
+
+  // Delete Single Certificate Permanently
+  fastify.delete('/:id', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+    const { id } = request.params;
+    const res = await query(`DELETE FROM certificates WHERE id = $1 RETURNING id, recipient_name, unique_code`, [id]);
+    
+    if (res.rows.length === 0) {
+      return reply.code(404).send({ message: 'Certificate not found' });
+    }
+
+    return {
+      message: 'Certificate permanently deleted successfully',
+      certificate: res.rows[0]
+    };
+  });
+
+  // Bulk Delete Certificates Permanently
+  fastify.post('/bulk-delete', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+    const { ids = [] } = request.body || {};
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return reply.code(400).send({ message: 'Array of certificate IDs is required' });
+    }
+
+    const res = await query(`DELETE FROM certificates WHERE id = ANY($1::uuid[]) RETURNING id`, [ids]);
+
+    return {
+      message: `${res.rowCount} certificate(s) permanently deleted`,
+      count: res.rowCount
+    };
+  });
 }
 
 module.exports = certificateRoutes;
