@@ -42,7 +42,7 @@ async function sendCertificateEmail({
   if (frontendUrl.includes('pages.dev')) {
     frontendUrl = 'https://certificates.shazusofttechnologies.org';
   }
-  const apiUrl = process.env.PUBLIC_API_URL || 'http://localhost:5000';
+  const apiUrl = process.env.PUBLIC_API_URL || 'https://shazusoft-cert-backend-0aja.onrender.com';
 
   const finalDownloadUrl = downloadUrl || `${apiUrl}/api/public/certificates/${code}/download`;
   const finalVerifyUrl = verifyUrl || `${frontendUrl}/verify/${code}`;

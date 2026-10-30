@@ -65,10 +65,13 @@ fastify.register(fastifyStatic, {
   prefix: '/uploads/'
 });
 
-// Health check endpoint
-fastify.get('/api/health', async (request, reply) => {
+// Health check endpoints
+const healthHandler = async (request, reply) => {
   return { status: 'ok', service: 'Certificate Generator & Verification Engine', timestamp: new Date().toISOString() };
-});
+};
+fastify.get('/', healthHandler);
+fastify.get('/health', healthHandler);
+fastify.get('/api/health', healthHandler);
 
 // Register API Route Plugins
 fastify.register(require('./routes/authRoutes'), { prefix: '/api/auth' });

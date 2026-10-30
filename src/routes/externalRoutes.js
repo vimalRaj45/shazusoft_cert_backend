@@ -41,7 +41,7 @@ async function externalRoutes(fastify, options) {
         ORDER BY t.created_at DESC
       `);
 
-      const publicApiUrl = process.env.PUBLIC_API_URL || 'http://localhost:5000';
+      const publicApiUrl = process.env.PUBLIC_API_URL || 'https://shazusoft-cert-backend-0aja.onrender.com';
 
       const formattedTemplates = templatesRes.rows.map((t) => {
         const previewUrl = t.file_url?.startsWith('http')
@@ -101,7 +101,7 @@ async function externalRoutes(fastify, options) {
     }
 
     const { template, fields, mapping, matchedBy } = resolution;
-    const publicApiUrl = process.env.PUBLIC_API_URL || 'http://localhost:5000';
+    const publicApiUrl = process.env.PUBLIC_API_URL || 'https://shazusoft-cert-backend-0aja.onrender.com';
     const previewUrl = template.file_url?.startsWith('http')
       ? template.file_url
       : `${publicApiUrl}/api/templates/${template.id}/image`;
@@ -310,7 +310,7 @@ async function externalRoutes(fastify, options) {
 
       // URLs
       const frontendUrl = process.env.FRONTEND_URL || 'https://certificates.shazusofttechnologies.org';
-      const publicApiUrl = process.env.PUBLIC_API_URL || 'http://localhost:5000';
+      const publicApiUrl = process.env.PUBLIC_API_URL || 'https://shazusoft-cert-backend-0aja.onrender.com';
       const verifyUrl = `${frontendUrl}/verify/${uniqueCode}`;
       const downloadUrl = `${publicApiUrl}/api/public/certificates/${uniqueCode}/download`;
       const previewImageUrl = `${publicApiUrl}/api/public/certificates/${uniqueCode}/preview`;
@@ -551,7 +551,7 @@ async function externalRoutes(fastify, options) {
       );
 
       const frontendUrl = process.env.FRONTEND_URL || 'https://certificates.shazusofttechnologies.org';
-      const publicApiUrl = process.env.PUBLIC_API_URL || 'http://localhost:5000';
+      const publicApiUrl = process.env.PUBLIC_API_URL || 'https://shazusoft-cert-backend-0aja.onrender.com';
 
       return {
         success: true,
