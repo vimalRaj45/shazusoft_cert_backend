@@ -6,6 +6,14 @@ const { sendCertificateEmail } = require('../services/hostingerService');
 const { renderCertificateCanvas } = require('../services/renderService');
 const { queueService } = require('../services/queueService');
 
+const getPublicApiUrl = () => {
+  let url = (process.env.PUBLIC_API_URL || 'https://shazusoft-cert-backend-0aja.onrender.com').trim().replace(/\/+$/, '');
+  if (url.includes('onrender.com') && !url.includes('shazusoft-cert-backend-0aja.onrender.com')) {
+    url = 'https://shazusoft-cert-backend-0aja.onrender.com';
+  }
+  return url;
+};
+
 async function externalRoutes(fastify, options) {
   // All external API endpoints are secured with API Key authentication
   fastify.addHook('preHandler', authenticateApiKey);
@@ -41,7 +49,7 @@ async function externalRoutes(fastify, options) {
         ORDER BY t.created_at DESC
       `);
 
-      const publicApiUrl = process.env.PUBLIC_API_URL || 'https://shazusoft-cert-backend-0aja.onrender.com';
+      const publicApiUrl = getPublicApiUrl();
 
       const formattedTemplates = templatesRes.rows.map((t) => {
         const previewUrl = t.file_url?.startsWith('http')
@@ -101,7 +109,7 @@ async function externalRoutes(fastify, options) {
     }
 
     const { template, fields, mapping, matchedBy } = resolution;
-    const publicApiUrl = process.env.PUBLIC_API_URL || 'https://shazusoft-cert-backend-0aja.onrender.com';
+    const publicApiUrl = getPublicApiUrl();
     const previewUrl = template.file_url?.startsWith('http')
       ? template.file_url
       : `${publicApiUrl}/api/templates/${template.id}/image`;
@@ -310,7 +318,7 @@ async function externalRoutes(fastify, options) {
 
       // URLs
       const frontendUrl = process.env.FRONTEND_URL || 'https://certificates.shazusofttechnologies.org';
-      const publicApiUrl = process.env.PUBLIC_API_URL || 'https://shazusoft-cert-backend-0aja.onrender.com';
+      const publicApiUrl = getPublicApiUrl();
       const verifyUrl = `${frontendUrl}/verify/${uniqueCode}`;
       const downloadUrl = `${publicApiUrl}/api/public/certificates/${uniqueCode}/download`;
       const previewImageUrl = `${publicApiUrl}/api/public/certificates/${uniqueCode}/preview`;
@@ -551,7 +559,7 @@ async function externalRoutes(fastify, options) {
       );
 
       const frontendUrl = process.env.FRONTEND_URL || 'https://certificates.shazusofttechnologies.org';
-      const publicApiUrl = process.env.PUBLIC_API_URL || 'https://shazusoft-cert-backend-0aja.onrender.com';
+      const publicApiUrl = getPublicApiUrl();
 
       return {
         success: true,

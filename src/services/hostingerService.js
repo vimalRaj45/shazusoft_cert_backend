@@ -42,10 +42,16 @@ async function sendCertificateEmail({
   if (frontendUrl.includes('pages.dev')) {
     frontendUrl = 'https://certificates.shazusofttechnologies.org';
   }
-  const apiUrl = process.env.PUBLIC_API_URL || 'https://shazusoft-cert-backend-0aja.onrender.com';
+  let apiUrl = (process.env.PUBLIC_API_URL || 'https://shazusoft-cert-backend-0aja.onrender.com').trim().replace(/\/+$/, '');
+  if (apiUrl.includes('onrender.com') && !apiUrl.includes('shazusoft-cert-backend-0aja.onrender.com')) {
+    apiUrl = 'https://shazusoft-cert-backend-0aja.onrender.com';
+  }
 
-  const finalDownloadUrl = downloadUrl || `${apiUrl}/api/public/certificates/${code}/download`;
-  const finalVerifyUrl = verifyUrl || `${frontendUrl}/verify/${code}`;
+  let finalDownloadUrl = (downloadUrl || `${apiUrl}/api/public/certificates/${code}/download`).trim();
+  if (finalDownloadUrl.includes('onrender.com') && !finalDownloadUrl.includes('shazusoft-cert-backend-0aja.onrender.com')) {
+    finalDownloadUrl = finalDownloadUrl.replace(/https:\/\/[^/]+\.onrender\.com/, 'https://shazusoft-cert-backend-0aja.onrender.com');
+  }
+  const finalVerifyUrl = (verifyUrl || `${frontendUrl}/verify/${code}`).trim();
 
   const config = new Configuration({ accessToken: apiKey });
   const sendApi = new SendApi(config);
@@ -122,8 +128,8 @@ Your official certificate for "${courseTitle}" from ${issuerName} is ready.
 
 Certificate ID: ${certificateCode}
 
-Download Official Certificate (PDF): ${downloadUrl}
-Public Verification & LinkedIn Share: ${verifyUrl}
+Download Official Certificate (PDF): ${finalDownloadUrl}
+Public Verification & LinkedIn Share: ${finalVerifyUrl}
 
 Authenticated by ${issuerName}.
   `;

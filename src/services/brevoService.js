@@ -28,12 +28,18 @@ async function sendCertificateEmail({
   if (frontendUrl.includes('pages.dev')) {
     frontendUrl = 'https://certificates.shazusofttechnologies.org';
   }
-  const apiUrl = process.env.PUBLIC_API_URL || 'https://shazusoft-cert-backend-0aja.onrender.com';
+  let apiUrl = (process.env.PUBLIC_API_URL || 'https://shazusoft-cert-backend-0aja.onrender.com').trim().replace(/\/+$/, '');
+  if (apiUrl.includes('onrender.com') && !apiUrl.includes('shazusoft-cert-backend-0aja.onrender.com')) {
+    apiUrl = 'https://shazusoft-cert-backend-0aja.onrender.com';
+  }
 
   const title = courseTitle || certificateTitle || 'Certificate of Completion';
   const code = certificateCode || uniqueCode || '';
 
-  const downloadUrl = `${apiUrl}/api/public/certificates/${code}/download`;
+  let downloadUrl = `${apiUrl}/api/public/certificates/${code}/download`;
+  if (downloadUrl.includes('onrender.com') && !downloadUrl.includes('shazusoft-cert-backend-0aja.onrender.com')) {
+    downloadUrl = downloadUrl.replace(/https:\/\/[^/]+\.onrender\.com/, 'https://shazusoft-cert-backend-0aja.onrender.com');
+  }
   const verifyUrl = `${frontendUrl}/verify/${code}`;
   
   // LinkedIn Add to Profile URL
