@@ -67,7 +67,7 @@ async function publicRoutes(fastify, options) {
       SELECT c.*, t.id as t_id, t.name as t_name, t.file_url as t_file_url, t.width_px, t.height_px
       FROM certificates c
       JOIN templates t ON c.template_id = t.id
-      WHERE c.unique_code = $1
+      WHERE LOWER(TRIM(c.unique_code)) = LOWER(TRIM($1))
     `, [code]);
 
     if (certRes.rows.length === 0) {
@@ -183,12 +183,12 @@ async function publicRoutes(fastify, options) {
 
     if (email) {
       params.push(email.trim().toLowerCase());
-      sql += ` AND LOWER(c.recipient_email) = $${params.length}`;
+      sql += ` AND LOWER(TRIM(c.recipient_email)) = $${params.length}`;
     }
 
     if (code) {
-      params.push(code.trim());
-      sql += ` AND c.unique_code = $${params.length}`;
+      params.push(code.trim().toLowerCase());
+      sql += ` AND LOWER(TRIM(c.unique_code)) = $${params.length}`;
     }
 
     sql += ` ORDER BY c.issued_at DESC`;
