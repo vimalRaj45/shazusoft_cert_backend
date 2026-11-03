@@ -62,6 +62,8 @@ async function publicRoutes(fastify, options) {
   // On-Demand PDF Download
   fastify.get('/certificates/:code/download', async (request, reply) => {
     const { code } = request.params;
+    const isDirect = request.query?.direct === '1';
+    const acceptsHtml = (request.headers['accept'] || '').includes('text/html');
 
     const certRes = await query(`
       SELECT c.*, t.id as t_id, t.name as t_name, t.file_url as t_file_url, t.width_px, t.height_px
@@ -71,12 +73,158 @@ async function publicRoutes(fastify, options) {
     `, [code]);
 
     if (certRes.rows.length === 0) {
+      if (acceptsHtml && !isDirect) {
+        reply.type('text/html');
+        return reply.code(404).send(`
+          <!DOCTYPE html><html><head><meta charset="utf-8"><title>Certificate Not Found</title>
+          <style>body{font-family:sans-serif;background:#F5F3EC;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+          .box{background:#fff;padding:32px;border-radius:16px;text-align:center;max-width:400px;border:1px solid #D3DDD7}</style></head>
+          <body><div class="box"><h2>Certificate Not Found</h2><p>We could not find a certificate matching this link.</p></div></body></html>
+        `);
+      }
       return reply.code(404).send('Certificate not found');
     }
 
     const cert = certRes.rows[0];
     if (cert.status === 'revoked') {
+      if (acceptsHtml && !isDirect) {
+        reply.type('text/html');
+        return reply.code(403).send(`
+          <!DOCTYPE html><html><head><meta charset="utf-8"><title>Certificate Revoked</title>
+          <style>body{font-family:sans-serif;background:#F5F3EC;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+          .box{background:#fff;padding:32px;border-radius:16px;text-align:center;max-width:400px;border:1px solid #FECACA}</style></head>
+          <body><div class="box"><h2 style="color:#DC2626">Certificate Revoked</h2><p>This certificate has been revoked and cannot be downloaded.</p></div></body></html>
+        `);
+      }
       return reply.code(403).send('This certificate has been revoked and cannot be downloaded.');
+    }
+
+    const frontendUrl = process.env.FRONTEND_URL || 'https://certificates.shazusofttechnologies.org';
+
+    // If opened directly in browser, show "Please Wait" page with auto-download
+    if (acceptsHtml && !isDirect) {
+      reply.type('text/html');
+      return reply.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Downloading Certificate - Please Wait</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #F5F3EC;
+      color: #123B32;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      background: #ffffff;
+      border: 1.5px solid #D3DDD7;
+      border-radius: 20px;
+      max-width: 480px;
+      width: 100%;
+      padding: 40px 28px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(18, 59, 50, 0.08);
+    }
+    .spinner {
+      width: 52px;
+      height: 52px;
+      border: 4px solid #E8EFEB;
+      border-top: 4px solid #123B32;
+      border-radius: 50%;
+      margin: 0 auto 20px auto;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0 0 10px 0;
+      color: #123B32;
+    }
+    p {
+      font-size: 14px;
+      color: #527A68;
+      margin: 0 0 18px 0;
+      line-height: 1.5;
+    }
+    .cert-badge {
+      display: inline-block;
+      background: #E8EFEB;
+      border: 1px solid #D3DDD7;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: bold;
+      color: #123B32;
+      margin-bottom: 22px;
+    }
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .btn-download {
+      display: inline-block;
+      background: #123B32;
+      color: #ffffff !important;
+      text-decoration: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .btn-verify {
+      display: inline-block;
+      background: transparent;
+      color: #123B32 !important;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 13px;
+      border: 1px solid #D3DDD7;
+    }
+    .hint {
+      font-size: 12px;
+      color: #718096;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="spinner"></div>
+    <h1>Please wait...</h1>
+    <p>Your official certificate is being generated and will download automatically.</p>
+    <div class="cert-badge">${cert.unique_code}</div>
+
+    <div class="actions">
+      <a href="?direct=1" id="dl-btn" class="btn-download">Click here if download doesn't start</a>
+      <a href="${frontendUrl}/verify/${cert.unique_code}" class="btn-verify">View Certificate Online</a>
+    </div>
+
+    <div class="hint">Generating high-resolution vector PDF with anti-tamper QR code...</div>
+  </div>
+
+  <script>
+    setTimeout(function() {
+      window.location.href = window.location.pathname + '?direct=1';
+    }, 400);
+  </script>
+</body>
+</html>`);
     }
 
     const template = {
@@ -93,7 +241,7 @@ async function publicRoutes(fastify, options) {
       template,
       fields: fieldsRes.rows,
       certificate: cert,
-      frontendUrl: process.env.FRONTEND_URL || 'https://certificates.shazusofttechnologies.org'
+      frontendUrl
     });
 
     const safeName = cert.recipient_name.replace(/[^a-zA-Z0-9_-]/g, '_');
